@@ -1,0 +1,17 @@
+# Large datasets and sparse matrices (GitHub limits to <100MB)
+data/*.csv
+data/*.npy
+data/*.npz
+
+# Model weights & binaries
+models/*.keras
+models/*.h5
+models/*.pkl
+
+# Vectorizers
+data/*.pkl
+
+# Python
+__pycache__/
+*.py[cod]
+.vscode/
