@@ -53,10 +53,15 @@ def predict_single(text, chosen_model):
         feat = tfidf.transform([cleaned])
         if chosen_model == "SVM":
             if svm is None: return "SVM model not trained yet."
-            pred = int(svm.predict(feat)[0])
             score = float(svm.decision_function(feat)[0])
+            pred = int(score > 0)
             label = "Positive" if pred == 1 else "Negative"
-            return f"Model: {chosen_model}\nPredicted Sentiment: {label}\nDecision Score: {score:+.4f}"
+            
+            # Convert SVM margin distance to probability using Sigmoid (Platt Scaling)
+            prob_pos = 1.0 / (1.0 + np.exp(-score))
+            confidence = prob_pos if pred == 1 else (1.0 - prob_pos)
+            
+            return f"Model: {chosen_model}\nPredicted Sentiment: {label}\nConfidence: {confidence * 100:.2f}% (Pos: {prob_pos*100:.2f}%, Neg: {(1.0-prob_pos)*100:.2f}%)"
         else:
             if nb is None: return "Naive Bayes model not trained yet."
             pred = int(nb.predict(feat)[0])
@@ -77,7 +82,7 @@ def predict_single(text, chosen_model):
         p = float(dl_model.predict(seq, verbose=0)[0][0])
         label = "Positive" if p > 0.5 else "Negative"
         conf = p if p > 0.5 else (1.0 - p)
-        return f"Model: {chosen_model}\nPredicted Sentiment: {label}\nProbability Score: {p:.4f} (Confidence: {conf*100:.2f}%)"
+        return f"Model: {chosen_model}\nPredicted Sentiment: {label}\nConfidence: {conf * 100:.2f}% (Pos: {p*100:.2f}%, Neg: {(1.0-p)*100:.2f}%)"
 
 def predict_all(text):
     if not text.strip():
@@ -90,12 +95,25 @@ def predict_all(text):
     if tfidf is not None:
         feat = tfidf.transform([cleaned])
         if svm is not None:
-            p = int(svm.predict(feat)[0])
-            rows.append({"Model": "SVM (LinearSVC)", "Predicted Sentiment": "Positive" if p == 1 else "Negative", "Score / Probability": f"{svm.decision_function(feat)[0]:+.4f}"})
+            score = float(svm.decision_function(feat)[0])
+            pred = int(score > 0)
+            prob_pos = 1.0 / (1.0 + np.exp(-score))
+            conf = prob_pos if pred == 1 else (1.0 - prob_pos)
+            rows.append({
+                "Model": "SVM (LinearSVC)",
+                "Predicted Sentiment": "Positive" if pred == 1 else "Negative",
+                "Confidence (%)": f"{conf * 100:.2f}%",
+                "Positive Probability": f"{prob_pos * 100:.2f}%"
+            })
         if nb is not None:
-            p = int(nb.predict(feat)[0])
+            pred = int(nb.predict(feat)[0])
             proba = nb.predict_proba(feat)[0]
-            rows.append({"Model": "Naive Bayes (MultinomialNB)", "Predicted Sentiment": "Positive" if p == 1 else "Negative", "Score / Probability": f"{proba[1]:.4f}"})
+            rows.append({
+                "Model": "Naive Bayes (MultinomialNB)",
+                "Predicted Sentiment": "Positive" if pred == 1 else "Negative",
+                "Confidence (%)": f"{proba[pred] * 100:.2f}%",
+                "Positive Probability": f"{proba[1] * 100:.2f}%"
+            })
             
     # DL models
     if tokenizer is not None:
@@ -103,7 +121,14 @@ def predict_all(text):
         for name, m in [("Simple RNN", rnn), ("LSTM", lstm), ("GRU", gru)]:
             if m is not None:
                 p = float(m.predict(seq, verbose=0)[0][0])
-                rows.append({"Model": name, "Predicted Sentiment": "Positive" if p > 0.5 else "Negative", "Score / Probability": f"{p:.4f}"})
+                pred = int(p > 0.5)
+                conf = p if pred == 1 else (1.0 - p)
+                rows.append({
+                    "Model": name,
+                    "Predicted Sentiment": "Positive" if pred == 1 else "Negative",
+                    "Confidence (%)": f"{conf * 100:.2f}%",
+                    "Positive Probability": f"{p * 100:.2f}%"
+                })
                 
     return pd.DataFrame(rows)
 
