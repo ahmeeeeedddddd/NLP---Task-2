@@ -21,11 +21,11 @@
         "weighted_f1": 0.8727
     },
     "LSTM": {
-        "accuracy": 0.536,
-        "macro_precision": 0.5379,
-        "macro_recall": 0.5365,
-        "macro_f1": 0.5317,
-        "weighted_f1": 0.5315
+        "accuracy": 0.8911,
+        "macro_precision": 0.8913,
+        "macro_recall": 0.891,
+        "macro_f1": 0.891,
+        "weighted_f1": 0.8911
     },
     "GRU": {
         "accuracy": 0.8919,

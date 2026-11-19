@@ -63,22 +63,29 @@ for model_name in ["rnn", "lstm", "gru"]:
         acc_key = "accuracy" if "accuracy" in hist else "train_accuracy"
         val_acc_key = "val_accuracy" if "val_accuracy" in hist else None
         
+        num_epochs = len(hist[acc_key])
+        epochs = list(range(1, num_epochs + 1))
+        
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
         
         if acc_key in hist:
-            ax1.plot(hist[acc_key], label="Train Acc")
+            ax1.plot(epochs, hist[acc_key], marker="o", label="Train Acc")
         if val_acc_key and val_acc_key in hist:
-            ax1.plot(hist[val_acc_key], label="Val Acc")
+            ax1.plot(epochs, hist[val_acc_key], marker="o", label="Val Acc")
         ax1.set_title(f"{model_name.upper()} Accuracy")
         ax1.set_xlabel("Epoch")
+        ax1.set_ylabel("Accuracy")
+        ax1.set_xticks(epochs)
         ax1.legend()
         
         if "loss" in hist:
-            ax2.plot(hist["loss"], label="Train Loss")
+            ax2.plot(epochs, hist["loss"], marker="o", label="Train Loss")
         if "val_loss" in hist:
-            ax2.plot(hist["val_loss"], label="Val Loss")
+            ax2.plot(epochs, hist["val_loss"], marker="o", label="Val Loss")
         ax2.set_title(f"{model_name.upper()} Loss")
         ax2.set_xlabel("Epoch")
+        ax2.set_ylabel("Loss")
+        ax2.set_xticks(epochs)
         ax2.legend()
         
         plt.tight_layout()
